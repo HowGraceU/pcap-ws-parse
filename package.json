@@ -1,0 +1,52 @@
+{
+	"name": "pcap-ws-parse",
+	"version": "1.0.0",
+	"description": "",
+	"module": "dist/index.esm.js",
+	"main": "dist/index.cjs.js",
+	"types": "types",
+	"files": [
+		"src",
+		"dist",
+		"types"
+	],
+	"scripts": {
+		"test": "jest",
+		"cov": "rimraf coverage && jest --coverage",
+		"lint": "eslint src/**/*.*",
+		"build": "tsc && npm run rollup",
+		"rollup": "rollup -c rollup.config.js",
+		"prebuild": "rimraf dist && rimraf types && npm run ci",
+		"ci": "npm run lint && npm run test",
+		"prepublishOnly": "npm run build",
+		"pub-beta": "npm publish --tag=beta"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/HowGraceU/pcap-ws-parse.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/HowGraceU/pcap-ws-parse/issues"
+	},
+	"homepage": "https://github.com/HowGraceU/pcap-ws-parse#readme",
+	"devDependencies": {
+		"@babel/plugin-transform-runtime": "^7.7.4",
+		"@babel/preset-typescript": "^7.7.4",
+		"@types/jest": "^24.0.23",
+		"@typescript-eslint/eslint-plugin": "^2.9.0",
+		"@typescript-eslint/parser": "^2.9.0",
+		"eslint": "^6.7.2",
+		"eslint-config-airbnb-base": "^14.0.0",
+		"eslint-plugin-import": "^2.18.2",
+		"jest": "^24.9.0",
+		"rimraf": "^3.0.0",
+		"rollup": "^1.27.6",
+		"rollup-plugin-babel": "^4.3.3",
+		"rollup-plugin-node-resolve": "^5.2.0",
+		"ts-jest": "^24.2.0",
+		"typescript": "^3.7.2"
+	}
+}
