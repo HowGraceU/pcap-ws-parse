@@ -1,8 +1,0 @@
-{
-	"eslint.options": {
-		"configFile": ".eslintrc.js"
-	},
-	"eslint.autoFixOnSave": true,
-	"editor.tabSize": 2,
-	"files.eol": "\n",
-}
