@@ -5,7 +5,7 @@ import {
 } from '../util';
 
 import {
-  PacketsWithNetwork, TransportSchema, PacketsWithTransport,
+  PacketsWithNetWork, TransportSchema, PacketsWithTransport,
 } from './pcapSchema';
 
 const firstSeqMap = new Map();
@@ -14,7 +14,7 @@ const firstAckMap = new Map();
 /**
  * @param packetBody
  */
-function TCPParser(packet: PacketsWithNetwork): {Transport: TransportSchema; Application: Uint8Array} {
+function TCPParser(packet: PacketsWithNetWork): {Transport: TransportSchema; Application: Uint8Array} {
   const { packetBody: { NetWork: { SIP }, Transport: body } } = packet;
   const SPort = buf2num(body.subarray(0, 2));
   const DPort = buf2num(body.subarray(2, 4));
@@ -81,7 +81,7 @@ function TCPParser(packet: PacketsWithNetwork): {Transport: TransportSchema; App
 /**
  * @param {Buffer} packetBody
  */
-function UDPParser(packet: PacketsWithNetwork): {Transport: TransportSchema; Application: Uint8Array} {
+function UDPParser(packet: PacketsWithNetWork): {Transport: TransportSchema; Application: Uint8Array} {
   const { packetBody: { Transport: body } } = packet;
   const SPort = buf2num(body.subarray(0, 2));
   const DPort = buf2num(body.subarray(2, 4));
@@ -117,12 +117,11 @@ const parserMap: { [LinkType: string]: Function } = new Proxy<{ [LinkType: strin
   },
 });
 
-
 /**
  * Transport Layer
  * @param packets
  */
-export default function TransportParser(packets: PacketsWithNetwork[]): PacketsWithTransport[] {
+export default function TransportParser(packets: PacketsWithNetWork[]): PacketsWithTransport[] {
   return packets.map<PacketsWithTransport>((packet) => {
     const { packetBody } = packet;
     const { NetWork: { protocol } } = packetBody;
@@ -130,7 +129,7 @@ export default function TransportParser(packets: PacketsWithNetwork[]): PacketsW
     const parser = parserMap[protocol];
     const { Transport, Application } = parser(packet);
 
-    return {
+    const ret: PacketsWithTransport = {
       ...packet,
       packetBody: {
         ...packet.packetBody,
@@ -138,6 +137,11 @@ export default function TransportParser(packets: PacketsWithNetwork[]): PacketsW
         Application,
       },
     };
+
+    if (protocol) {
+      ret.protocol = protocol;
+    }
+    return ret;
   }).filter((packet) => {
     const { packetBody } = packet;
     const { NetWork: { protocol, SIP, id } } = packetBody;

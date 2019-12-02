@@ -31,10 +31,11 @@ interface PcapHeaders {
 
 export declare type PcapBody = PcapBodySchema[];
 
-interface PcapBodySchema {
+export declare interface PcapBodySchema {
   packetHeaders: PacketHeaders;
   packetBody: PacketBody;
   FrameNum: number;
+  protocol?: string;
 }
 
 export declare interface PacketHeaders {
@@ -46,9 +47,9 @@ export declare interface PacketHeaders {
 
 export declare interface PacketBody {
   DataLink: DataLinkSchema;
-  Network: NetworkSchema;
+  NetWork: NetWorkSchema;
   Transport: TransportSchema;
-  Application: ApplicationSchema;
+  Application: ApplicationSchema | Uint8Array;
 }
 
 export declare interface PacketsWithHeaders {
@@ -84,14 +85,15 @@ export declare interface PacketsWithDataLink {
     NetWork: Uint8Array;
   };
   FrameNum: number;
+  protocol?: string;
 }
 
 /**
- * @interface NetworkSchema
+ * @interface NetWorkSchema
  * @property {number} version
- * @property {number} NetworkHeaderLen 规定报头长度需乘4
+ * @property {number} NetWorkHeaderLen 规定报头长度需乘4
  * @property {string} servicesFidle 前3位优先权字段已经舍弃，4位TOS字段和一位保留字段。服务类型
- * @property {number} NetworkTotalLen 规定报头长度需乘4
+ * @property {number} NetWorkTotalLen 规定报头长度需乘4
  * @property {number} id 若数据总长度大于最大单元则进行分片，对方主机组装数据时的标识
  * @property {boolean} dontFragment 是否禁止分片，一旦禁止分片，超过MTU大小的数据将会直接丢弃
  * @property {boolean} moreFragment 分片的结束标识
@@ -102,11 +104,11 @@ export declare interface PacketsWithDataLink {
  * @property {string} SIP 来源IP
  * @property {string} DIP 目标IP
  */
-export declare interface NetworkSchema {
+export declare interface NetWorkSchema {
   version: number;
-  NetworkHeaderLen: number;
+  NetWorkHeaderLen: number;
   servicesFidle: string;
-  NetworkTotalLen: number;
+  NetWorkTotalLen: number;
   id: number;
   dontFragment: boolean;
   moreFragment: boolean;
@@ -118,14 +120,15 @@ export declare interface NetworkSchema {
   DIP: string;
 }
 
-export declare interface PacketsWithNetwork {
+export declare interface PacketsWithNetWork {
   packetHeaders: PacketHeaders;
   packetBody: {
     DataLink: DataLinkSchema;
-    NetWork: NetworkSchema;
+    NetWork: NetWorkSchema;
     Transport: Uint8Array;
   };
   FrameNum: number;
+  protocol?: string;
 }
 
 /**
@@ -186,14 +189,55 @@ export declare interface PacketsWithTransport {
   packetHeaders: PacketHeaders;
   packetBody: {
     DataLink: DataLinkSchema;
-    NetWork: NetworkSchema;
+    NetWork: NetWorkSchema;
     Transport: TransportSchema;
     Application: Uint8Array;
   };
   FrameNum: number;
   retransmission?: PacketsWithTransport[];
+  protocol?: string;
 }
 
-export declare ApplicationSchema {
-  
+/**
+ *
+ */
+export declare type ApplicationSchema = HTTPReqchema | HTTPReschema | WSReschema | ApplicationError;
+
+export declare interface HTTPReqchema {
+  protocol: 'HTTP';
+  method: string;
+  url: string;
+  version: string;
+  requestHeaders: StrObj;
+  body: object | string;
+}
+
+export declare interface HTTPReschema {
+  status: number;
+  reason: string;
+  protocol: 'HTTP';
+  version: string;
+  responseHeaders: StrObj;
+  body: object | string;
+}
+
+export declare interface StrObj {
+  [key: string]: string;
+}
+
+export declare interface WSReschema {
+  FIN: boolean;
+  opcode: string;
+  payloadLen: number;
+  realLen: number;
+  useMask: boolean;
+  mask: string;
+  body: string | object;
+  protocol: 'websocket';
+}
+
+export declare interface ApplicationError {
+  body: Uint8Array;
+  errMsg: string;
+  protocol: undefined;
 }

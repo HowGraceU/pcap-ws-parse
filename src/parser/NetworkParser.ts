@@ -4,7 +4,7 @@ import {
   buf2Hex,
 } from '../util';
 
-import { PacketsWithDataLink, NetworkSchame, PacketsWithNetwork } from './pcapSchema';
+import { PacketsWithDataLink, NetWorkSchema, PacketsWithNetWork } from './pcapSchema';
 
 // 服务类型
 const servicesFidleMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: number]: string }>({
@@ -51,10 +51,10 @@ const protocolMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: numbe
 });
 
 /**
- * Network Layer
+ * NetWork Layer
  * @param packets
  */
-export default function NetworkParser(packets: PacketsWithDataLink[]): PacketsWithNetwork[] {
+export default function NetWorkParser(packets: PacketsWithDataLink[]): PacketsWithNetWork[] {
   return packets.map((packet) => {
     const {
       packetBody: {
@@ -63,9 +63,9 @@ export default function NetworkParser(packets: PacketsWithDataLink[]): PacketsWi
     } = packet;
 
     const version = (body[0] & 0xf0) >> 4;
-    const NetworkHeaderLen = (body[0] & 0x0f) * 4;
+    const NetWorkHeaderLen = (body[0] & 0x0f) * 4;
     const servicesFidle = servicesFidleMap[(body[1] & 0b00011110) >> 1];
-    const NetworkTotalLen = buf2num(body.subarray(2, 4));
+    const NetWorkTotalLen = buf2num(body.subarray(2, 4));
     const id = buf2num(body.subarray(4, 6));
     const dontFragment = Boolean(body[6] & 0x40);
     const moreFragment = Boolean(body[6] & 0x20);
@@ -76,11 +76,11 @@ export default function NetworkParser(packets: PacketsWithDataLink[]): PacketsWi
     const SIP = buf2IP(body.subarray(12, 16));
     const DIP = buf2IP(body.subarray(16, 20));
 
-    const NetWork: NetworkSchame = {
+    const NetWork: NetWorkSchema = {
       version,
-      NetworkHeaderLen,
+      NetWorkHeaderLen,
       servicesFidle,
-      NetworkTotalLen,
+      NetWorkTotalLen,
       id,
       dontFragment,
       moreFragment,
@@ -92,13 +92,15 @@ export default function NetworkParser(packets: PacketsWithDataLink[]): PacketsWi
       DIP,
     };
 
-    return {
+    const ret: PacketsWithNetWork = {
       ...packet,
       packetBody: {
         ...packet.packetBody,
         NetWork,
-        Transport: body.subarray(NetworkHeaderLen),
+        Transport: body.subarray(NetWorkHeaderLen),
       },
     };
+    ret.protocol = protocol;
+    return ret;
   });
 }

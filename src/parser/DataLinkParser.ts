@@ -3,7 +3,7 @@ import {
   buf2Mac,
 } from '../util';
 
-import { PacketsWithHeaders, DataLinkSchame, PacketsWithDataLink } from './pcapSchema';
+import { PacketsWithHeaders, DataLinkSchema, PacketsWithDataLink } from './pcapSchema';
 
 const packetTypeMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: number]: string }>({
   0: 'Unicast to us',
@@ -58,7 +58,7 @@ export default function DataLinkParser(packets: PacketsWithHeaders[]): PacketsWi
     // fixme: 若抓包网卡指定为any时，两个长度不等，是否还有其他方法判断
     const isAny = Caplen - Len !== 0;
 
-    let DataLink: DataLinkSchame;
+    let DataLink: DataLinkSchema;
     let DataLinkHeaderLen;
     if (isAny) {
       const packetType = packetTypeMap[buf2num(body.subarray(0, 2))];
@@ -91,6 +91,7 @@ export default function DataLinkParser(packets: PacketsWithHeaders[]): PacketsWi
     }
 
     DataLink.DataLinkHeaderLen = DataLinkHeaderLen;
+
     const ret: PacketsWithDataLink = {
       ...packet,
       packetBody: {
@@ -98,6 +99,7 @@ export default function DataLinkParser(packets: PacketsWithHeaders[]): PacketsWi
         NetWork: body.subarray(DataLinkHeaderLen),
       },
     };
+    ret.protocol = DataLink.protocol;
     return ret;
   });
 }

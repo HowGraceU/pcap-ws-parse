@@ -1,5 +1,5 @@
 import DataLinkParser from './DataLinkParser';
-import NetworkParser from './NetworkParser';
+import NetWorkParser from './NetWorkParser';
 import TransportParser from './TransportParser';
 import ApplicationParser from './ApplicationParser';
 
@@ -14,7 +14,7 @@ export default function packetBodyParser(packets: PacketsWithHeaders[]): PcapBod
 
   packetsRet = DataLinkParser(packets);
 
-  packetsRet = NetworkParser(packetsRet);
+  packetsRet = NetWorkParser(packetsRet);
 
   packetsRet = TransportParser(packetsRet);
 
