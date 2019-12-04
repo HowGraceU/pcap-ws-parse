@@ -7,4 +7,4 @@ export { default as buf2UTF8 } from './buf2UTF8';
 export { default as UTF82buf } from './UTF82buf';
 export { default as isHTTPMethod } from './isHTTPMethod';
 export { default as concatBuf } from './concatBuf';
-export { default as isObject } from './isObject';
+export { isPlainObject } from './isPlainObject';
