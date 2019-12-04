@@ -5,5 +5,5 @@ const methods = new Set<string>(['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'OPTION
  * @returns {Boolean}
  */
 export default function isHTTPMethod(method: string): boolean {
-  return methods.has(method);
+  return methods.has(method.trim());
 }

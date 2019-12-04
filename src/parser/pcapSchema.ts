@@ -36,6 +36,8 @@ export declare interface PcapBodySchema {
   packetBody: PacketBody;
   FrameNum: number;
   protocol?: string;
+  retransmission?: PacketsWithTransport[];
+  sticks?: number[];
 }
 
 export declare interface PacketHeaders {
@@ -203,23 +205,31 @@ export declare interface PacketsWithTransport {
  */
 export declare type ApplicationSchema = HTTPReqchema | HTTPReschema | WSReschema | ApplicationError;
 
-export declare interface HTTPReqchema {
+/**
+ * 存在粘包是 body 为 Uint8Array
+ */
+export declare interface HTTPSchema {
   protocol: 'HTTP';
+  headers: StrObj;
+  body: object | string | Uint8Array;
+  stick?: boolean;
+  bodyLen?: number;
+}
+
+/**
+ * @property {object | string} body 头部为json时返回object
+ */
+export declare type HTTPReqchema = {
   method: string;
   url: string;
   version: string;
-  requestHeaders: StrObj;
-  body: object | string;
-}
+} & HTTPSchema
 
-export declare interface HTTPReschema {
+export declare type HTTPReschema = {
   status: number;
   reason: string;
-  protocol: 'HTTP';
   version: string;
-  responseHeaders: StrObj;
-  body: object | string;
-}
+} & HTTPSchema
 
 export declare interface StrObj {
   [key: string]: string;
@@ -231,13 +241,14 @@ export declare interface WSReschema {
   payloadLen: number;
   realLen: number;
   useMask: boolean;
-  mask: string;
-  body: string | object;
+  mask: number[];
+  body: string | object | Uint8Array;
   protocol: 'websocket';
+  stick?: boolean;
+  bodyLen?: number;
 }
 
 export declare interface ApplicationError {
   body: Uint8Array;
   errMsg: string;
-  protocol: undefined;
 }

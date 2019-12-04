@@ -1,7 +1,6 @@
 import {
   buf2num,
   buf2UTF8,
-  concatBuf,
 } from '../util';
 
 import { WSReschema } from './pcapSchema';
@@ -26,18 +25,12 @@ const opcodeMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: number]
   },
 });
 
-let WSEnd = true;
-let WSData: Uint8Array | undefined;
 
 /**
  * @param packet
  */
 export default function WSParser(packet: Uint8Array): WSReschema {
   let packetBody = packet;
-
-  if (!WSEnd && typeof WSData !== 'undefined') {
-    packetBody = concatBuf(WSData, packetBody);
-  }
 
   const FIN = Boolean(packetBody[0] & 0x80);
   if (!FIN) {
@@ -49,8 +42,9 @@ export default function WSParser(packet: Uint8Array): WSReschema {
   let payloadLen = 0;
   let realLen = 0;
   let mask: number[] = [];
-  let body: Uint8Array = new Uint8Array();
-  let data: string | object = '';
+  let body: object | string | Uint8Array = new Uint8Array();
+  let stick = false;
+  let bodyLen = 0;
 
   if (opcode === 'text frame') {
     useMask = Boolean(packetBody[1] & 0x80);
@@ -82,32 +76,41 @@ export default function WSParser(packet: Uint8Array): WSReschema {
       packetBody = packetBody.subarray(4);
     }
 
-    body = packetBody.subarray(0, 0 + realLen);
+    const bodyBuf = packetBody.subarray(0, 0 + realLen);
+    const bodyBufLen = bodyBuf.length;
 
-    const bodyString = buf2UTF8(body.map((byte, index) => byte ^ mask[index % 4]));
-    try {
-      data = JSON.parse(bodyString);
-    } catch {
-      data = bodyString;
+    if (realLen === bodyBufLen) {
+      const bodyString = buf2UTF8(bodyBuf.map((byte, index) => byte ^ mask[index % 4]));
+      try {
+        body = JSON.parse(bodyString);
+      } catch {
+        body = bodyString;
+      }
+    } else if (realLen > bodyBufLen) {
+      stick = true;
+      body = packetBody;
+
+      const WSHeaderLen = packetBody.length - bodyBuf.length;
+      bodyLen = WSHeaderLen + realLen;
     }
   }
 
-  if (realLen === packetBody.length) {
-    WSEnd = true;
-    WSData = undefined;
-  } else {
-    WSEnd = false;
-    WSData = Uint8Array.from(packet);
-  }
 
-  return {
+  const ret: WSReschema = {
     FIN,
     opcode,
     payloadLen,
     realLen,
     useMask,
-    mask: mask.map((byte) => byte.toString(16)).join(' '),
-    body: data,
+    mask,
+    body,
     protocol: 'websocket',
   };
+
+  if (stick) {
+    ret.stick = true;
+    ret.bodyLen = bodyLen;
+  }
+
+  return ret;
 }

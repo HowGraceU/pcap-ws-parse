@@ -1,8 +1,5 @@
 import fs from 'fs';
 import parser from '../src/index';
-import {
-  HTTPReqchema, HTTPReschema, WSReschema, ApplicationError,
-} from '../src/parser/pcapSchema';
 
 describe('checked result schema', () => {
   const fileName = './pcap/ws.pcap';
@@ -56,6 +53,7 @@ describe('checked result schema', () => {
         packetBody,
         protocol,
       } = packet;
+      // console.log(`check FrameNum : ${FrameNum}`);
       it('packet schema', () => {
         expect(typeof FrameNum).toBe('number');
         expect(typeof packetHeaders).toBe('object');
@@ -190,31 +188,31 @@ describe('checked result schema', () => {
                 method,
                 url,
                 version: AppVersion,
-                requestHeaders,
+                headers,
                 body,
-              } = (Application as HTTPReqchema);
+              } = Application;
               expect(typeof method).toBe('string');
               expect(typeof url).toBe('string');
               expect(typeof AppVersion).toBe('string');
-              expect(typeof requestHeaders).toBe('object');
+              expect(typeof headers).toBe('object');
 
-              const contentType = requestHeaders['Content-Type'];
+              const contentType = headers['Content-Type'];
               expect(typeof body).toBe(contentType.includes('application/json') ? 'object' : 'string');
             } else {
               const {
                 status,
                 reason,
                 version: AppVersion,
-                responseHeaders,
+                headers,
                 body,
-              } = (Application as HTTPReschema);
+              } = Application;
 
               expect(typeof status).toBe('number');
               expect(typeof reason).toBe('string');
               expect(typeof AppVersion).toBe('string');
-              expect(typeof responseHeaders).toBe('object');
+              expect(typeof headers).toBe('object');
 
-              const contentType = responseHeaders['Content-Type'];
+              const contentType = headers['Content-Type'];
               expect(typeof body).toBe(contentType.includes('application/json') ? 'object' : 'string');
             }
           } else if (Application.protocol === 'websocket') {
@@ -225,23 +223,23 @@ describe('checked result schema', () => {
               realLen,
               useMask,
               mask,
-            } = (Application as WSReschema);
+            } = Application;
 
             expect(typeof FIN).toBe('boolean');
             expect(typeof opcode).toBe('string');
             expect(typeof payloadLen).toBe('number');
             expect(typeof realLen).toBe('number');
             expect(typeof useMask).toBe('boolean');
-            expect(typeof mask).toBe('string');
-          } else {
-            const {
-              body,
-              errMsg,
-            } = (Application as ApplicationError);
-
-            expect(body[Symbol.toStringTag]).toBe('Uint8Array');
-            expect(typeof errMsg).toBe('string');
+            expect(Array.isArray(mask)).toBe(true);
           }
+        } else if ('body' in Application) {
+          const {
+            body,
+            errMsg,
+          } = Application;
+
+          expect(body[Symbol.toStringTag]).toBe('Uint8Array');
+          expect(typeof errMsg).toBe('string');
         } else {
           expect(Application[Symbol.toStringTag]).toBe('Uint8Array');
         }

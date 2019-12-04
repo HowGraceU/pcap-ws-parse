@@ -4,5 +4,7 @@ export { default as buf2IP } from './buf2ip';
 export { default as buf2Hex } from './buf2hex';
 export { default as uniqPcap } from './uniqPcap';
 export { default as buf2UTF8 } from './buf2UTF8';
+export { default as UTF82buf } from './UTF82buf';
 export { default as isHTTPMethod } from './isHTTPMethod';
 export { default as concatBuf } from './concatBuf';
+export { default as isObject } from './isObject';
