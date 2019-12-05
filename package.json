@@ -1,10 +1,10 @@
 {
 	"name": "pcap-ws-parse",
 	"version": "1.0.0",
-	"description": "",
+	"description": "websocket and http application pcap parser for javascript(browser and node), code with typescript",
 	"module": "dist/index.esm.js",
 	"main": "dist/index.cjs.js",
-	"types": "types",
+	"types": "types/index.d.ts",
 	"files": [
 		"src",
 		"dist",
