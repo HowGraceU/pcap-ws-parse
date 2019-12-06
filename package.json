@@ -16,7 +16,7 @@
 		"lint": "eslint src/**/*.*",
 		"build": "tsc && npm run rollup",
 		"rollup": "rollup -c rollup.config.js",
-		"prebuild": "rimraf dist && rimraf types && npm run ci",
+		"prebuild": "rimraf dist types && npm run ci",
 		"ci": "npm run lint && npm run test",
 		"prepublishOnly": "npm run build",
 		"pub-beta": "npm publish --tag=beta"
