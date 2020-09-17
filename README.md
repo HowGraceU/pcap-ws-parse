@@ -37,8 +37,8 @@ console.log(ret);
 <!-- browser -->
 <input type="file" id="file">
 
-<script>
-	import parser from 'pcap-ws-parse';
+<script type="module">
+  import parser from './node_modules/pcap-ws-parse/dist/index.esm.js';
 
 	const file = document.getElementById('file');
 	file.onchange = e => {
