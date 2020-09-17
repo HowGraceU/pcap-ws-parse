@@ -46,58 +46,45 @@ const protocolMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: numbe
 export default function DataLinkParser(packets: PacketsWithHeaders[]): PacketsWithDataLink[] {
   return packets.map<PacketsWithDataLink>((packet) => {
     const {
-      packetHeaders,
       packetBody: body,
     } = packet;
 
-    const {
-      Caplen,
-      Len,
-    } = packetHeaders;
-
     // fixme: 若抓包网卡指定为any时，两个长度不等，是否还有其他方法判断
-    const isAny = Caplen - Len !== 0;
 
-    let DataLink: DataLinkSchema;
-    let DataLinkHeaderLen;
-    if (isAny) {
-      const packetType = packetTypeMap[buf2num(body.subarray(0, 2))];
-      const LinkLayerAddressType = buf2num(body.subarray(2, 4)); // 1 表示ARPHRD_ETHER
-      const LinkLayerAddressLen = buf2num(body.subarray(4, 6));
-      const SMac = buf2Mac(body.slice(6, 12));
-      const protocol = protocolMap[buf2num(body.subarray(14, 16))];
+    const packetType = packetTypeMap[buf2num(body.subarray(0, 2))];
+    const LinkLayerAddressType = buf2num(body.subarray(2, 4)); // 1 表示ARPHRD_ETHER
+    const LinkLayerAddressLen = buf2num(body.subarray(4, 6));
+    const DMac = buf2Mac(body.slice(0, 6));
 
-      DataLinkHeaderLen = 16;
-      DataLink = {
-        packetType,
-        LinkLayerAddressType,
-        LinkLayerAddressLen,
-        SMac,
-        protocol,
-        DataLinkHeaderLen: 0,
-      };
-    } else {
-      const DMac = buf2Mac(body.slice(0, 6));
-      const SMac = buf2Mac(body.slice(6, 12));
-      const protocol = protocolMap[buf2num(body.subarray(12, 14))];
+    const SMac = buf2Mac(body.slice(6, 12));
 
+    let protocol = '';
+    let DataLinkHeaderLen = 0;
+    const num = buf2num(body.subarray(12, 14));
+    if (num !== 0x0000) {
+      protocol = protocolMap[num];
       DataLinkHeaderLen = 14;
-      DataLink = {
-        DMac,
-        SMac,
-        protocol,
-        DataLinkHeaderLen: 0,
-      };
+    } else {
+      protocol = protocolMap[buf2num(body.subarray(14, 16))];
+      DataLinkHeaderLen = 16;
     }
 
-    DataLink.DataLinkHeaderLen = DataLinkHeaderLen;
+    const DataLink: DataLinkSchema = {
+      packetType,
+      LinkLayerAddressType,
+      LinkLayerAddressLen,
+      DMac,
+      SMac,
+      protocol,
+      DataLinkHeaderLen
+    };
 
     const ret: PacketsWithDataLink = {
       ...packet,
       packetBody: {
         DataLink,
-        NetWork: body.subarray(DataLinkHeaderLen),
-      },
+        NetWork: body.subarray(DataLinkHeaderLen)
+      }
     };
     ret.protocol = DataLink.protocol;
     return ret;
