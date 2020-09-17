@@ -14,7 +14,7 @@ const firstAckMap = new Map();
 /**
  * @param packetBody
  */
-function TCPParser(packet: PacketsWithNetWork): {Transport: TransportSchema; Application: Uint8Array} {
+function TCPParser(packet: PacketsWithNetWork): { Transport: TransportSchema; Application: Uint8Array } {
   const { packetBody: { NetWork: { SIP }, Transport: body } } = packet;
   const SPort = buf2num(body.subarray(0, 2));
   const DPort = buf2num(body.subarray(2, 4));
@@ -81,7 +81,7 @@ function TCPParser(packet: PacketsWithNetWork): {Transport: TransportSchema; App
 /**
  * @param {Buffer} packetBody
  */
-function UDPParser(packet: PacketsWithNetWork): {Transport: TransportSchema; Application: Uint8Array} {
+function UDPParser(packet: PacketsWithNetWork): { Transport: TransportSchema; Application: Uint8Array } {
   const { packetBody: { Transport: body } } = packet;
   const SPort = buf2num(body.subarray(0, 2));
   const DPort = buf2num(body.subarray(2, 4));
@@ -127,7 +127,7 @@ export default function TransportParser(packets: PacketsWithNetWork[]): PacketsW
     const { NetWork: { protocol } } = packetBody;
 
     const parser = parserMap[protocol];
-    const { Transport, Application } = parser(packet);
+    const { Transport = {}, Application = {} } = parser(packet);
 
     const ret: PacketsWithTransport = {
       ...packet,
