@@ -1,4 +1,3 @@
-
 import pcapParser from './parser/pcapParser';
 
 import { PcapResult } from './parser/pcapSchema';

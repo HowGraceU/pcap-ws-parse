@@ -1,4 +1,3 @@
-
 export declare interface PcapResult {
   pcapHeaders: PcapHeaders;
   pcapBody: PcapBody;

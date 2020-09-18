@@ -100,7 +100,6 @@ function UDPParser(packet: PacketsWithNetWork): { Transport: TransportSchema; Ap
   };
 }
 
-
 // 服务类型
 const parserMap: { [LinkType: string]: Function } = new Proxy<{ [LinkType: string]: Function }>({
   TCP: TCPParser,

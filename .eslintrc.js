@@ -24,6 +24,17 @@ module.exports = {
 	],
 	rules: {
 		'max-len': 0,
-		'no-bitwise': 0
+		'no-bitwise': 0,
+		"linebreak-style": [0, "error", "windows"],
+		"import/extensions": [
+			"error",
+			"ignorePackages",
+			{
+				"js": "never",
+				"jsx": "never",
+				"ts": "never",
+				"tsx": "never"
+			}
+		]
 	}
 };

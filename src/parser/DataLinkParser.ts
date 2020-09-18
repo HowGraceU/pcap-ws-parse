@@ -76,15 +76,15 @@ export default function DataLinkParser(packets: PacketsWithHeaders[]): PacketsWi
       DMac,
       SMac,
       protocol,
-      DataLinkHeaderLen
+      DataLinkHeaderLen,
     };
 
     const ret: PacketsWithDataLink = {
       ...packet,
       packetBody: {
         DataLink,
-        NetWork: body.subarray(DataLinkHeaderLen)
-      }
+        NetWork: body.subarray(DataLinkHeaderLen),
+      },
     };
     ret.protocol = DataLink.protocol;
     return ret;

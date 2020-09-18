@@ -25,7 +25,6 @@ const opcodeMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: number]
   },
 });
 
-
 /**
  * @param packet
  */
@@ -94,7 +93,6 @@ export default function WSParser(packet: Uint8Array): WSReschema {
       bodyLen = WSHeaderLen + realLen;
     }
   }
-
 
   const ret: WSReschema = {
     FIN,
