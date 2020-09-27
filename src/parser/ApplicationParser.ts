@@ -21,11 +21,19 @@ const stickMap = new Map<string, { offset: number; buf: Uint8Array; pacp: PcapBo
  * @param packets
  */
 export default function ApplicationParser(packets: PacketsWithTransport[]): PcapBodySchema[] {
-  return packets.map((packet) => {
+  packets.sort((packetA, packetB) => {
+    const seqA = packetA.packetBody.Transport.SeqNum || 0;
+    const seqB = packetB.packetBody.Transport.SeqNum || 0;
+
+    return seqA - seqB;
+  });
+
+  const retPackets = packets.reduce((packetsArray, packet) => {
     const { packetBody } = packet;
-    const { NetWork: { protocol, SIP }, Transport: { SPort, AckNum }, Application: body } = packetBody;
+    const { NetWork: { protocol, SIP }, Transport: { SPort, AckNum } } = packetBody;
     const key = `${SIP}:${SPort}_${AckNum}`;
     const stickPcap = stickMap.get(key);
+    let { Application: body } = packetBody;
 
     // 保存粘包
     if (stickPcap) {
@@ -48,7 +56,7 @@ export default function ApplicationParser(packets: PacketsWithTransport[]): Pcap
       };
 
       let retBody: string | object | Uint8Array;
-      if (stickPcap.offset === buf.length) {
+      if (stickPcap.offset >= buf.length) {
         ret.sticks = sticks;
         stickMap.delete(key);
 
@@ -74,10 +82,16 @@ export default function ApplicationParser(packets: PacketsWithTransport[]): Pcap
       }
       (ret.packetBody.Application as HTTPReqchema | HTTPReschema | WSReschema).body = retBody;
 
-      return ret;
+      packetsArray.push(ret);
+
+      if (stickPcap.offset > buf.length) {
+        body = body.subarray(buf.length - offset);
+      } else {
+        return packetsArray;
+      }
     }
 
-    let Application: ApplicationSchema | undefined;
+    let Application: ApplicationSchema[] | undefined;
 
     if (protocol === 'TCP' && body.length !== 0) {
       try {
@@ -91,42 +105,55 @@ export default function ApplicationParser(packets: PacketsWithTransport[]): Pcap
         }
       } catch (e) {
         // console.log(e);
-        Application = {
+        Application = [{
           body,
           errMsg: e.message,
-        };
+        }];
       }
     }
 
     if (typeof Application !== 'undefined') {
-      const ret: PcapBodySchema = {
-        ...packet,
-        packetBody: {
-          ...packet.packetBody,
-          Application,
-        },
-      };
+      Application.forEach((app) => {
+        const ret: PcapBodySchema = {
+          ...packet,
+          packetBody: {
+            ...packet.packetBody,
+            Application: app,
+          },
+        };
 
-      if ('protocol' in Application) {
-        // 若存在粘包，则设置全局变量 stickMap
-        if (Application.stick) {
-          const sticks = [ret.FrameNum];
-          const buf = new Uint8Array(Application.bodyLen as number);
-          buf.set((Application.body as Uint8Array), 0);
-          stickMap.set(key, {
-            offset: (Application.body as Uint8Array).length,
-            buf,
-            pacp: ret,
-            sticks,
-          });
-        } else {
-          ret.protocol = Application.protocol;
+        if ('protocol' in app) {
+          // 若存在粘包，则设置全局变量 stickMap
+          if (app.stick) {
+            const sticks = [ret.FrameNum];
+            const buf = new Uint8Array(app.bodyLen as number);
+            buf.set((app.body as Uint8Array), 0);
+            stickMap.set(key, {
+              offset: (app.body as Uint8Array).length,
+              buf,
+              pacp: ret,
+              sticks,
+            });
+          } else {
+            ret.protocol = app.protocol;
+          }
         }
-      }
 
-      return ret;
+        packetsArray.push(ret);
+      });
+
+      return packetsArray;
     }
 
-    return packet;
+    packetsArray.push(packet);
+
+    return packetsArray;
+  }, [] as PcapBodySchema[]);
+
+  return retPackets.sort((packetA, packetB) => {
+    const FrameNumA = packetA.FrameNum;
+    const FrameNumB = packetB.FrameNum;
+
+    return FrameNumA - FrameNumB;
   });
 }

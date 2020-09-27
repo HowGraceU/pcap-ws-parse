@@ -32,6 +32,14 @@
     "startTime": "2019-11-23 11:12:00"
   },
   {
+    "id": 8427,
+    "method": "voiceStatus",
+    "manageIndex": "5757",
+    "status": 1,
+    "personId": "3bd8f94e98ef47a9a1df74b5167e5dcf",
+    "startTime": "2019-11-23 11:12:00"
+  },
+  {
     "id": 8428,
     "method": "voiceStatus",
     "manageIndex": "5757",

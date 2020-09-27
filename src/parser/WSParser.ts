@@ -28,87 +28,98 @@ const opcodeMap: { [LinkType: number]: string } = new Proxy<{ [LinkType: number]
 /**
  * @param packet
  */
-export default function WSParser(packet: Uint8Array): WSReschema {
+export default function WSParser(packet: Uint8Array): WSReschema[] {
+  const wsArr: WSReschema[] = [];
+
   let packetBody = packet;
+  while (packetBody.length > 0) {
+    const FIN = Boolean(packetBody[0] & 0x80);
+    if (!FIN) {
+      throw new Error('websocket is not end, FIN is not 1');
+    }
 
-  const FIN = Boolean(packetBody[0] & 0x80);
-  if (!FIN) {
-    throw new Error('websocket is not end, FIN is not 1');
-  }
+    const opcode = opcodeMap[packetBody[0] & 0x0f];
+    let useMask = false;
+    let payloadLen = 0;
+    let realLen = 0;
+    let mask: number[] = [];
+    let body: object | string | Uint8Array = new Uint8Array();
+    let stick = false;
+    let bodyLen = 0;
 
-  const opcode = opcodeMap[packetBody[0] & 0x0f];
-  let useMask = false;
-  let payloadLen = 0;
-  let realLen = 0;
-  let mask: number[] = [];
-  let body: object | string | Uint8Array = new Uint8Array();
-  let stick = false;
-  let bodyLen = 0;
+    if (opcode === 'text frame') {
+      useMask = Boolean(packetBody[1] & 0x80);
+      payloadLen = packetBody[1] & 0x7f;
 
-  if (opcode === 'text frame') {
-    useMask = Boolean(packetBody[1] & 0x80);
-    payloadLen = packetBody[1] & 0x7f;
+      switch (payloadLen) {
+        case 126: {
+          realLen = buf2num(packetBody.subarray(2, 4));
+          packetBody = packetBody.subarray(4);
+          break;
+        }
 
-    switch (payloadLen) {
-      case 126: {
-        realLen = buf2num(packetBody.subarray(2, 4));
+        case 127: {
+          realLen = buf2num(packetBody.subarray(2, 10));
+          packetBody = packetBody.subarray(10);
+          break;
+        }
+
+        default: {
+          realLen = payloadLen;
+          packetBody = packetBody.subarray(2);
+          break;
+        }
+      }
+
+      if (useMask) {
+        mask = Array.from(packetBody.subarray(0, 4));
+
         packetBody = packetBody.subarray(4);
-        break;
       }
 
-      case 127: {
-        realLen = buf2num(packetBody.subarray(2, 10));
-        packetBody = packetBody.subarray(10);
-        break;
-      }
+      const bodyBuf = packetBody.subarray(0, 0 + realLen);
+      const bodyBufLen = bodyBuf.length;
 
-      default: {
-        realLen = payloadLen;
-        packetBody = packetBody.subarray(2);
-        break;
+      if (realLen === bodyBufLen) {
+        const bodyString = buf2UTF8(bodyBuf.map((byte, index) => byte ^ mask[index % 4]));
+        try {
+          body = JSON.parse(bodyString);
+        } catch {
+          body = bodyString;
+        }
+      } else if (realLen > bodyBufLen) {
+        stick = true;
+        body = packetBody;
+
+        const WSHeaderLen = packetBody.length - bodyBufLen;
+        bodyLen = WSHeaderLen + realLen;
       }
     }
 
-    if (useMask) {
-      mask = Array.from(packetBody.subarray(0, 4));
+    const ret: WSReschema = {
+      FIN,
+      opcode,
+      payloadLen,
+      realLen,
+      useMask,
+      mask,
+      body,
+      protocol: 'websocket',
+    };
 
-      packetBody = packetBody.subarray(4);
+    if (stick) {
+      ret.stick = true;
+      ret.bodyLen = bodyLen;
     }
 
-    const bodyBuf = packetBody.subarray(0, 0 + realLen);
-    const bodyBufLen = bodyBuf.length;
+    wsArr.push(ret);
 
-    if (realLen === bodyBufLen) {
-      const bodyString = buf2UTF8(bodyBuf.map((byte, index) => byte ^ mask[index % 4]));
-      try {
-        body = JSON.parse(bodyString);
-      } catch {
-        body = bodyString;
-      }
-    } else if (realLen > bodyBufLen) {
-      stick = true;
-      body = packetBody;
-
-      const WSHeaderLen = packetBody.length - bodyBuf.length;
-      bodyLen = WSHeaderLen + realLen;
+    if (!opcode.startsWith('text frame')) {
+      packetBody = packetBody.subarray(0, 0);
     }
+
+    packetBody = packetBody.subarray(realLen);
   }
 
-  const ret: WSReschema = {
-    FIN,
-    opcode,
-    payloadLen,
-    realLen,
-    useMask,
-    mask,
-    body,
-    protocol: 'websocket',
-  };
-
-  if (stick) {
-    ret.stick = true;
-    ret.bodyLen = bodyLen;
-  }
-
-  return ret;
+  return wsArr;
 }

@@ -8,7 +8,7 @@ import HTTPParser from './HTTPParser';
 /**
  * @param packet
  */
-export default function HTTPResParser(packet: Uint8Array): HTTPReschema {
+export default function HTTPResParser(packet: Uint8Array): HTTPReschema[] {
   const data = buf2UTF8(packet).split('\r\n');
 
   const firstLine = data.shift() || '';
@@ -17,10 +17,10 @@ export default function HTTPResParser(packet: Uint8Array): HTTPReschema {
 
   const HTTPData = HTTPParser(data);
 
-  return {
+  return [{
     version,
     status: parseInt(status, 10),
     reason,
     ...HTTPData,
-  };
+  }];
 }

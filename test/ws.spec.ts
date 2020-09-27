@@ -11,7 +11,7 @@ describe('checked websocket parse', () => {
   const wsPackets = pcapResult.pcapBody.filter((packet) => packet.protocol === 'websocket');
 
   it('checked websocket data', () => {
-    expect(wsPackets).toHaveLength(7);
+    expect(wsPackets).toHaveLength(8);
 
     const expectData = JSON.parse(fs.readFileSync(resolve(__dirname, './wsData.json'), 'utf-8'));
     const wsData = wsPackets.map((p) => (p.packetBody.Application as WSReschema).body);
